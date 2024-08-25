@@ -70,25 +70,7 @@ class ProductController extends Controller
         // Set Stripe secret key
         Stripe::setApiKey(env('STRIPE_SECRET_KEY'));
 
-        // // Token is created using Checkout.js, this token is sent from the client-side
-        // $token = $request->stripeToken;
-
-        // // Create a charge: this will charge the user's card
-        // try {
-        //     $charge = Charge::create([
-        //         'amount' => $product->price * 100, // Amount in cents
-        //         'currency' => 'usd',
-        //         'description' => 'Payment for product: ' . $product->name,
-        //         'source' => $token,
-        //     ]);
-
-        //     // Redirect with a success message
-        //     return redirect()->route('product.show', $id)->with('success', 'Payment successful!');
-
-        // } catch (\Exception $e) {
-        //     return redirect()->route('product.show', $id)->with('error', 'Payment failed: ' . $e->getMessage());
-        // }
-
+        // Create a new payment intent
         $paymentIntent = PaymentIntent::create([
             'amount' => $product->price, // $20.00
             'currency' => 'usd',
@@ -99,6 +81,7 @@ class ProductController extends Controller
             'return_url' => route('checkout.complete'),
         ]);
 
+        // Check if the payment intent requires action
         if ($paymentIntent->status == 'requires_action') {
             return response()->json([
                 'requires_action' => true,
@@ -109,26 +92,52 @@ class ProductController extends Controller
         }
     }
 
-    // PaymentController.php
+    /**
+     * Show the checkout form
+     *
+     * @return \Illuminate\View\View
+    */
+
     public function showCheckoutForm()
     {
         return view('cashier.checkout');
     }
+
+    /**
+     * Show the checkout success page
+     *
+     * @return \Illuminate\View\View
+    */
 
      public function checkoutSuccess()
     {
         return view('cashier.success');
     }
 
+    /**
+     * Show the checkout cancel page
+     *
+     * @return \Illuminate\View\View
+     */
+
     public function checkoutCancel()
     {
         return view('cashier.cancel');
     }
 
+    /**
+     * Process a payment request
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+
     public function processPayment(Request $request)
     {
+        // Set the Stripe API key
         Stripe::setApiKey(env('STRIPE_SECRET_KEY'));
 
+        // Create a new payment intent
         $paymentIntent = PaymentIntent::create([
             'amount' => $request->amount, // $20.00
             'currency' => 'usd',
@@ -138,16 +147,25 @@ class ProductController extends Controller
             'return_url' => route('checkout.complete'),
         ]);
 
+        // Check the payment intent status
         if ($paymentIntent->status == 'requires_action') {
+            // If the payment intent requires action, return a JSON response with the client secret
             return response()->json([
                 'requires_action' => true,
                 'payment_intent_client_secret' => $paymentIntent->client_secret
             ]);
         } else {
+            // If the payment intent is successful, return a JSON response with a success flag
             return response()->json(['success' => true]);
         }
     }
-    // PaymentController.php
+
+    /**
+     * Complete the payment
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function completePayment(Request $request)
     {
         // Here you can handle the result of the payment, check if it succeeded, and display a message to the user
