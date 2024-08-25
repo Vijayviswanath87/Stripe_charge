@@ -3,11 +3,11 @@
 @section('content')
 
 <div class="container">
-    <h2 class="my-4 text-center bg-primary text-white p-2">Electronic Products</h2>
+    <h2 class="my-4 text-center bg-primary shadow-lg p-3 mb-1 text-white  rounded">Electronic Products</h2>
     <div class="row">
         @foreach($products as $product)
         <div class="col-md-3">
-            <div class="card mb-4 shadow-sm">
+            <div class="shadow-lg p-3 mb-1 bg-white rounded">
                 <h5 class="card-title p-2"> <b>{{ $product->name }}</b></h5>
                 <div class="card-body p-2">
                     <p class="card-text mb-1"><strong>Price:</strong> ${{ $product->price }}</p>

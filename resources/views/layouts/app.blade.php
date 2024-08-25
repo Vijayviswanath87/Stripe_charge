@@ -48,17 +48,19 @@
                 $url = parse_url($_SERVER['REQUEST_URI']);
                 $path = $url['path'];
                 // Display navigation menu items based on URL path
-                if (strpos($path, '/product/') !== false) {
-                    echo '<li class="nav-item "><a class="nav-link" href="/" style="text-decoration: underline;">Home</li> / <li class="nav-item active">Payment</a>';
-                } else {
-                    echo '<li class="nav-item active"><a class="nav-link" href="/" style="text-decoration: underline;">Home</a></li>';
-                }
+                 if (strpos($path, '/product/') !== false || strpos($path, '/checkout/') !== false) {
+                        echo '<li class="breadcrumb-item"><a href="/">Products</a></li>';
+                        echo '<li class="breadcrumb-item active">Payment</li>';
+                         } else {
+                        echo '<li class="breadcrumb-item"><a href="/">Products</a></li>';
+                        }
                 ?>
             </li>
             </ul>
         </div>
     </nav>
 
+ 
     <div class="container mt-4">
         @yield('content')
     </div>

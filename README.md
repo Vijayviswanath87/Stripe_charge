@@ -3,6 +3,19 @@ PHP version     : 7.4
 PHP extension   : mysqli
 Created Date    :23-08-2024
 
+Test account: 
+=================
+Visa : 4242424242424242
+CVC :Any 3 digits	
+Date: Any future date/M
+ZIP: Any Five digits
+
+Composer:
+=========
+
+composer require laravel/cashier
+
+
 Step 1: Set Up Your Laravel Project 
 ======================================
 Make sure your Laravel project is set up and that you've configured your .env file with your database and Stripe credentials.
@@ -95,7 +108,7 @@ class ProductsTableSeeder extends Seeder
             [
                 'name' => 'Sony Vaio',
                 'price' => 400,
-                'description' => 'SONY Intel Core i5 3rd Gen 3337U - (4 GB/750 GB HDD/Windows 8 Pro/2 GB Graphics) SVF15A13SNB graphics ',
+                'description' => 'SONY Intel Core i5 3rd Gen 3337U - (4 GB/750 GB HDD/Windows 8 Pro/2 GB Graphics) SVF15A13SNB graphics === ',
             ],
         ]);
     }
@@ -120,6 +133,12 @@ products/index.blade.php (Product listing with a table and loading spinner):
 
 products/show.blade.php (Product detail with Stripe form):
 
+checkout/ checkout.blade.php (Payment process with Stripe):
+
+checkout/ success.blade.php (Payment success):
+
+checkout/ cancel.blade.php (Payment cancel):
+
 Step 7: Set Up Routes
 =========================
 Define the routes in web.php:
@@ -127,5 +146,10 @@ Define the routes in web.php:
 Route::get('/', [ProductController::class, 'index']);
 Route::get('/product/{id}', [ProductController::class, 'show']);
 Route::post('/purchase/{id}', [ProductController::class, 'purchase'])->name('purchase');
-Route::get('/product/{id}', [ProductController::class, 'show'])->name('product.show');;
+Route::get('/product/{id}', [ProductController::class, 'show'])->name('product.show');
+
+Route::get('/checkout/success', [ProductController::class, 'checkoutSuccess'])->name('checkout.success');
+Route::get('/checkout/cancel', [ProductController::class, 'checkoutCancel'])->name('checkout.cancel');
+Route::post('/checkout', [ProductController::class, 'processPayment'])->name('checkout.process');
+Route::get('/checkout/complete', [ProductController::class, 'completePayment'])->name('checkout.complete');
 

@@ -15,6 +15,7 @@ use Stripe\Charge;
 use Stripe\Stripe;
 use Stripe\Exception\CardException;
 use Laravel\Cashier\Exceptions\IncompletePayment;
+use Stripe\PaymentIntent;
 
 /**
  * Controller for handling product-related actions
@@ -69,25 +70,95 @@ class ProductController extends Controller
         // Set Stripe secret key
         Stripe::setApiKey(env('STRIPE_SECRET_KEY'));
 
-        // Token is created using Checkout.js, this token is sent from the client-side
-        $token = $request->stripeToken;
+        // // Token is created using Checkout.js, this token is sent from the client-side
+        // $token = $request->stripeToken;
 
-        // Create a charge: this will charge the user's card
-        try {
-            $charge = Charge::create([
-                'amount' => $product->price * 100, // Amount in cents
-                'currency' => 'usd',
-                'description' => 'Payment for product: ' . $product->name,
-                'source' => $token,
+        // // Create a charge: this will charge the user's card
+        // try {
+        //     $charge = Charge::create([
+        //         'amount' => $product->price * 100, // Amount in cents
+        //         'currency' => 'usd',
+        //         'description' => 'Payment for product: ' . $product->name,
+        //         'source' => $token,
+        //     ]);
+
+        //     // Redirect with a success message
+        //     return redirect()->route('product.show', $id)->with('success', 'Payment successful!');
+
+        // } catch (\Exception $e) {
+        //     return redirect()->route('product.show', $id)->with('error', 'Payment failed: ' . $e->getMessage());
+        // }
+
+        $paymentIntent = PaymentIntent::create([
+            'amount' => $product->price, // $20.00
+            'currency' => 'usd',
+            'payment_method' => $request->payment_method_id,
+            'description' => 'Payment for product: ' . $product->name,
+            'confirmation_method' => 'manual',
+            'confirm' => true,
+            'return_url' => route('checkout.complete'),
+        ]);
+
+        if ($paymentIntent->status == 'requires_action') {
+            return response()->json([
+                'requires_action' => true,
+                'payment_intent_client_secret' => $paymentIntent->client_secret
             ]);
-
-            // Redirect with a success message
-            return redirect()->route('product.show', $id)->with('success', 'Payment successful!');
-
-        } catch (\Exception $e) {
-            return redirect()->route('product.show', $id)->with('error', 'Payment failed: ' . $e->getMessage());
+        } else {
+            return response()->json(['success' => true]);
         }
     }
 
+    // PaymentController.php
+    public function showCheckoutForm()
+    {
+        return view('cashier.checkout');
+    }
+
+     public function checkoutSuccess()
+    {
+        return view('cashier.success');
+    }
+
+    public function checkoutCancel()
+    {
+        return view('cashier.cancel');
+    }
+
+    public function processPayment(Request $request)
+    {
+        Stripe::setApiKey(env('STRIPE_SECRET_KEY'));
+
+        $paymentIntent = PaymentIntent::create([
+            'amount' => $request->amount, // $20.00
+            'currency' => 'usd',
+            'payment_method' => $request->payment_method_id,
+            'confirmation_method' => 'manual',
+            'confirm' => true,
+            'return_url' => route('checkout.complete'),
+        ]);
+
+        if ($paymentIntent->status == 'requires_action') {
+            return response()->json([
+                'requires_action' => true,
+                'payment_intent_client_secret' => $paymentIntent->client_secret
+            ]);
+        } else {
+            return response()->json(['success' => true]);
+        }
+    }
+    // PaymentController.php
+    public function completePayment(Request $request)
+    {
+        // Here you can handle the result of the payment, check if it succeeded, and display a message to the user
+        $paymentIntentId = $request->query('payment_intent');
+        $paymentIntent = \Stripe\PaymentIntent::retrieve($paymentIntentId);
+
+        if ($paymentIntent->status == 'succeeded') {
+            return redirect()->route('checkout.success')->with('success', 'Payment succeeded!');
+        } else {
+            return redirect()->route('checkout.cancel')->with('error', 'Payment failed!');
+        }
+    }
 
 }
